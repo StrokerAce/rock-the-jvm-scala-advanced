@@ -1,0 +1,105 @@
+package lectures.part2afp
+
+object LazyEvaluation extends App {
+
+  // lazy delays the evaluation of values
+
+  // examples of implications
+
+  // side effects
+  def sideEffectCondition: Boolean = {
+    println("Boo")
+    true
+  }
+
+  def simpleCondition: Boolean = false
+
+  lazy val lazyCondition = sideEffectCondition
+
+  // lazyCondition not evaluated,  && short circuits
+  println(if (simpleCondition && lazyCondition) "yes" else "no")
+
+  // in conjunction with call by name
+  def byNameMethod(n: => Int): Int = {
+    lazy val t = n
+    t + t + t + 1
+  }
+
+  def retrieveMagicValue: Int = {
+    // Side effect or long computation
+    println("Waiting")
+    Thread.sleep(1000)
+    42
+  }
+
+  // Wait a long time...
+  println(byNameMethod(retrieveMagicValue))
+
+  // Use lazy vals - call by need
+
+  // filtering with lazy vals
+  def lessThan30(i: Int): Boolean = {
+    println(s"$i is less than 30?")
+    i < 30
+  }
+
+  def greaterThan20(i: Int): Boolean = {
+    println(s"$i is less than 20?")
+    i < 20
+  }
+
+  val numbers = List(1, 25, 40, 5, 23)
+
+  val lt30 = numbers.filter(lessThan30)
+  val gt20 = lt30.filter(greaterThan20)
+
+  val lt30Lazy = numbers.withFilter(lessThan30)
+  val gt20Lazy = lt30Lazy.withFilter(greaterThan20)
+  println
+
+  gt20Lazy.foreach(println)
+
+  // for comprehensions use withFilter with guards
+  for {
+    a <- List(1, 2, 3) if a % 2 == 0
+  } yield a + 1
+
+  // translates to
+  List(1, 2, 3).withFilter(_ % 2 == 0).map(_ + 1)
+
+  /*
+  Exercise implement a lazily evaluated,  singly linked STREAM of elements
+
+  val naturals = MyStream.from(1)(x => x + 1) = stream of natural numbers (potentially infinite)
+
+  naturals.take(100).foreach(println) // Fine
+  naturals.foreach(println) // Infinite, will crash
+  naturals.map(_ * 2) // Stream of all even numbers. Infinite
+
+   */
+
+  abstract class MyStream[+A] {
+    def isEmpty: Boolean
+
+    def head: A
+
+    def tail: MyStream[A]
+
+    def #::[B >: A](element: B): MyStream[B] // prepend operator
+    def ++[B >: A](anotherStream: MyStream[B]): MyStream[B]
+
+    def foreach(f: A => Unit): Unit
+    def map[B](f: A => B): MyStream[A]
+    def flatMap[B](f: MyStream[B]): MyStream[B]
+    def filter(predicate: A => Boolean): MyStream[A]
+
+    def take(n: Int): MyStream[A]
+    def takeAsList(n: Int): List[A]
+  }
+
+  object MyStream {
+    def from[A](start: A)(generator: A => A): MyStream[A] = ???
+  }
+
+
+}
